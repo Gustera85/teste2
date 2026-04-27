@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precificação PMA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Paleta inspirada na imagem — tons quentes, terrosos, linho */
+  --bg:       #f0ece4;
+  --surface:  #e8e2d8;
+  --surface2: #ddd6c8;
+  --border:   #c8bfaf;
+  --text:     #2c2318;
+  --muted:    #7a6e60;
+  --real:     #8b5e3c;
+  --orcado:   #6b7c45;
+  --meta:     #3d6070;
+  --danger:   #9c3a2e;
+  --real-dim:   rgba(139,94,60,0.12);
+  --orcado-dim: rgba(107,124,69,0.12);
+  --meta-dim:   rgba(61,96,112,0.12);
+  --dre-w: 320px;
+  --header-h: 56px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+header {
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  flex-shrink: 0;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
+.divider-v { width:1px; height:28px; background:var(--border); }
+header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  flex: 1;
+}
+.badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.badge-real   { background:var(--real-dim);   color:var(--real);   border:1px solid rgba(139,94,60,0.4); }
+.badge-orcado { background:var(--orcado-dim); color:var(--orcado); border:1px solid rgba(107,124,69,0.4); }
+.badge-meta   { background:var(--meta-dim);   color:var(--meta);   border:1px solid rgba(61,96,112,0.4); }
+
+/* LAYOUT */
+.layout { display:flex; flex:1; min-height:0; position:relative; }
+.main { flex:1; overflow-y:visible; padding:16px 16px 40px 16px; display:flex; flex-direction:column; gap:14px; min-width:0; }
+
+/* EXPORT BTN */
+.export-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.export-btn:hover { border-color: var(--meta); color: var(--meta); }
+
+/* SERVICE TABS removed */
+
+/* SCENARIO CARDS */
+.scenarios { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.scenario-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 10px 14px 9px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title { font-family:'DM Serif Display',serif; font-size:14px; font-weight:400; }
+.card-body { padding:14px; }
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.kpi-item {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:9px 11px;
+}
+.kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:3px; }
+.kpi-value { font-size:14px; font-weight:500; color:var(--text); }
+.kpi-full { grid-column:span 2; }
+.lucro-box {
+  background:var(--surface2);
+  border-radius:7px;
+  padding:10px 13px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.lucro-label { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+.lucro-sub { font-size:10px; color:var(--muted); margin-top:2px; }
+.lucro-value { font-size:20px; font-weight:500; }
+
+/* SECTION CARD (collapsible) */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.section-card-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.section-card-title { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.section-card-toggle { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+.section-card-toggle.open { transform: rotate(180deg); }
+.section-card-body { padding: 0 14px 14px; }
+
+/* ALAVANCAS — INPUTS LAYOUT */
+.inputs-section { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.input-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:13px 15px;
+}
+.input-card-title { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; }
+.input-row { margin-bottom:10px; }
+.input-row:last-child { margin-bottom:0; }
+.input-row-label { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.input-row-name { font-size:10px; color:var(--muted); }
+.input-row-val { font-size:11px; font-weight:500; color:var(--text); }
+
+input[type=range] {
+  -webkit-appearance:none;
+  width:100%; height:4px;
+  border-radius:2px;
+  outline:none;
+  cursor:pointer;
+  background:var(--border);
+}
+input[type=range].real   { accent-color:var(--real); }
+input[type=range].orcado { accent-color:var(--orcado); }
+input[type=range].meta   { accent-color:var(--meta); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:13px; height:13px;
+  border-radius:50%;
+  border:2px solid var(--bg);
+  cursor:pointer;
+}
+input[type=range].real::-webkit-slider-thumb   { background:var(--real); }
+input[type=range].orcado::-webkit-slider-thumb { background:var(--orcado); }
+input[type=range].meta::-webkit-slider-thumb   { background:var(--meta); }
+
+/* EQUIPE */
+.equipe-section { padding: 0; }
+.equipe-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.equipe-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.equipe-col-title { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:10px; }
+.equipe-table { width:100%; border-collapse:collapse; font-size:10px; }
+.equipe-table th {
+  text-align:left; color:var(--muted); font-size:8px;
+  text-transform:uppercase; letter-spacing:0.07em;
+  padding:3px 5px; border-bottom:1px solid var(--border);
+}
+.equipe-table td { padding:4px 5px; border-bottom:1px solid var(--border); color:var(--text); }
+.equipe-table tr:last-child td { border-bottom:none; }
+.equipe-table td.muted { color:var(--muted); }
+.equipe-table td.r { color:var(--real); }
+.equipe-table td.o { color:var(--orcado); }
+.equipe-table td.m { color:var(--meta); }
+.equipe-table td.right { text-align:right; }
+.equipe-table input[type=text], .equipe-table input[type=number] {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  width: 100%;
+  outline: none;
+  padding: 1px 2px;
+}
+.equipe-table input[type=text]::placeholder, .equipe-table input[type=number]::placeholder { color: var(--muted); }
+.equipe-add-btn {
+  margin-top: 8px;
+  font-size: 9px;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  width: 100%;
+  transition: all 0.2s;
+}
+.equipe-add-btn:hover { border-color: var(--real); color: var(--real); }
+.equipe-total { margin-top:6px; font-size:9px; display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border); color:var(--muted); }
+.equipe-total span { font-weight:500; color:var(--text); }
+
+/* CUSTOS DIRETOS */
+.custos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.custos-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.custos-col-title { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:10px; }
+.custos-table { width:100%; border-collapse:collapse; font-size:10px; }
+.custos-table th {
+  text-align:left; color:var(--muted); font-size:8px;
+  text-transform:uppercase; letter-spacing:0.07em;
+  padding:3px 5px; border-bottom:1px solid var(--border);
+}
+.custos-table td { padding:4px 5px; border-bottom:1px solid var(--border); color:var(--text); }
+.custos-table tr:last-child td { border-bottom:none; }
+.custos-table td.muted { color:var(--muted); }
+.custos-table td.r { color:var(--real); }
+.custos-table td.o { color:var(--orcado); }
+.custos-table td.m { color:var(--meta); }
+.custos-table input[type=text], .custos-table input[type=number] {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  width: 100%;
+  outline: none;
+  padding: 1px 2px;
+}
+.custos-add-btn {
+  margin-top: 8px;
+  font-size: 9px;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  width: 100%;
+  transition: all 0.2s;
+}
+.custos-add-btn:hover { border-color: var(--orcado); color: var(--orcado); }
+.custos-total { margin-top:6px; font-size:9px; display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border); color:var(--muted); }
+.custos-total span { font-weight:500; color:var(--text); }
+
+/* IND TABLE */
+.ind-section {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:14px;
+}
+.ind-title { font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:12px; }
+.ind-table { width:100%; border-collapse:collapse; font-size:11px; }
+.ind-table th {
+  text-align:left; color:var(--muted); font-size:9px;
+  text-transform:uppercase; letter-spacing:0.08em;
+  padding:4px 8px; border-bottom:1px solid var(--border);
+}
+.ind-table td { padding:6px 8px; border-bottom:1px solid var(--border); color:var(--text); }
+.ind-table tr:last-child td { border-bottom:none; }
+.ind-table td.muted { color:var(--muted); }
+.ind-table td.r { color:var(--real); }
+.ind-table td.o { color:var(--orcado); }
+.ind-table td.m { color:var(--meta); }
+
+/* DRE PANEL */
+.dre-panel {
+  width:var(--dre-w);
+  background:var(--surface);
+  border-left:1px solid var(--border);
+  display:flex; flex-direction:column;
+  flex-shrink:0;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  align-self:flex-start;
+}
+.dre-header {
+  padding:13px 16px 11px;
+  border-bottom:1px solid var(--border);
+  font-family:'DM Serif Display',serif;
+  font-size:14px; font-weight:400;
+  flex-shrink:0;
+}
+.dre-body { padding:10px 14px; flex:1; }
+.dre-row {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  padding:4px 0; border-bottom:1px solid var(--border); gap:6px;
+}
+.dre-row:last-child { border-bottom:none; }
+.dre-row.total {
+  border-top:1px solid var(--border);
+  border-bottom:2px solid var(--border);
+  margin-top:4px; padding-top:7px; font-weight:500;
+}
+.dre-row.subtotal {
+  font-weight:500;
+  background:var(--surface2);
+  margin:0 -4px; padding:5px 4px;
+  border-radius:4px; border:none;
+}
+.dre-row.section-title {
+  font-size:9px; text-transform:uppercase; letter-spacing:0.1em;
+  color:var(--muted); padding-top:10px; padding-bottom:1px; border-bottom:none;
+}
+.dre-row.svc-section {
+  font-size:9px; text-transform:uppercase; letter-spacing:0.07em;
+  color: var(--text); font-weight: 500; background: var(--surface2);
+  margin:6px -4px 2px; padding:5px 4px; border-radius:4px; border:none;
+}
+.dre-name { font-size:10px; color:var(--muted); flex:1; }
+.dre-row.subtotal .dre-name { color:var(--text); font-size:10px; }
+.dre-row.total .dre-name { color:var(--text); font-size:11px; }
+.dre-row.svc-section .dre-name { color:var(--text); }
+.dre-vals { display:flex; gap:4px; }
+.dre-val { font-size:10px; text-align:right; min-width:52px; }
+.dre-val.real   { color:var(--real); }
+.dre-val.orcado { color:var(--orcado); }
+.dre-val.meta   { color:var(--meta); }
+.dre-legend {
+  display:flex; gap:8px; padding:8px 16px;
+  border-top:1px solid var(--border); flex-shrink:0;
+}
+.dre-leg-item { display:flex; align-items:center; gap:4px; font-size:9px; text-transform:uppercase; letter-spacing:0.07em; }
+.dre-leg-dot { width:6px; height:6px; border-radius:50%; }
+
+.var-chip { font-size:9px; padding:1px 5px; border-radius:10px; font-weight:500; }
+.var-pos { background:rgba(107,124,69,0.15); color:var(--orcado); }
+.var-neg { background:rgba(156,58,46,0.15); color:var(--danger); }
+
+/* SCROLLBAR */
+.main::-webkit-scrollbar, .dre-panel::-webkit-scrollbar { width:4px; }
+.main::-webkit-scrollbar-track, .dre-panel::-webkit-scrollbar-track { background:transparent; }
+.main::-webkit-scrollbar-thumb, .dre-panel::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ========== PDF PRINT ========== */
+@media print {
+  @page { size: A4 landscape; margin: 14mm 12mm; }
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: var(--bg) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  header { display:none !important; }
+  .layout { display:block !important; height:auto !important; overflow:visible !important; }
+  .main { overflow:visible !important; height:auto !important; padding:0 !important; gap:10px !important; }
+  .dre-panel { display:none !important; }
+  .export-btn { display:none !important; }
+  .service-tabs { display:none !important; }
+  .pdf-cover { display: flex !important; page-break-after: always; }
+  .pdf-dre-page { display: block !important; page-break-before: always; }
+  input[type=range] { display:none !important; }
+  .input-row-label { margin-bottom:0 !important; }
+  .equipe-add-btn, .custos-add-btn { display:none !important; }
+  .section-card, .scenario-card, .input-card, .ind-section { break-inside: avoid; }
+}
+
+.pdf-cover {
+  display: none;
+  background: var(--bg);
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.pdf-cover-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px;
+  color: var(--text);
+  text-align: center;
+}
+.pdf-cover-sub { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+.pdf-cover-line { width: 60px; height: 2px; background: var(--meta); }
+.pdf-cover-date { font-size: 11px; color: var(--muted); }
+
+.pdf-dre-page { display: none; }
+.pdf-dre-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px; color: var(--text);
+  margin-bottom: 16px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.pdf-dre-table { width:100%; border-collapse:collapse; font-size:11px; }
+.pdf-dre-table th {
+  text-align:left; color:var(--muted); font-size:9px;
+  text-transform:uppercase; letter-spacing:0.08em;
+  padding:5px 10px; border-bottom:1px solid var(--border);
+}
+.pdf-dre-table td { padding:6px 10px; border-bottom:1px solid var(--border); color:var(--text); font-size:11px; }
+.pdf-dre-table tr.subtotal td { font-weight:600; background:var(--surface2); }
+.pdf-dre-table tr.total td { font-weight:600; font-size:12px; border-top:2px solid var(--border); }
+.pdf-dre-table td.r { color:var(--real); }
+.pdf-dre-table td.o { color:var(--orcado); }
+.pdf-dre-table td.m { color:var(--meta); }
+.pdf-dre-table td.muted { color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- PDF COVER -->
+<div class="pdf-cover" id="pdfCover">
+  <div class="pdf-cover-line"></div>
+  <div class="pdf-cover-title">Precificação PMA</div>
+  <div class="pdf-cover-sub">Análise de Cenários — Arquitetura</div>
+  <div class="pdf-cover-date" id="coverDate"></div>
+</div>
+
+<!-- PDF DRE PAGE -->
+<div class="pdf-dre-page" id="pdfDrePage">
+  <div class="pdf-dre-title">DRE Consolidada — Demonstração de Resultado</div>
+  <table class="pdf-dre-table">
+    <thead>
+      <tr>
+        <th style="width:220px">Linha</th>
+        <th style="color:var(--real)">Projeto</th>
+        <th style="color:var(--orcado)">Decoração</th>
+        <th style="color:var(--meta)">Obra</th>
+        <th>Proj. vs Dec.</th>
+        <th>Proj. vs Obra</th>
+      </tr>
+    </thead>
+    <tbody id="pdfDreBody"></tbody>
+  </table>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="divider-v"></div>
+  <h1>Precificação PMA</h1>
+  <span class="badge badge-real">Projeto</span>
+  <span class="badge badge-orcado">Decoração</span>
+  <span class="badge badge-meta">Obra</span>
+  <button class="export-btn" onclick="exportPDF()">↓ Exportar PDF</button>
+</header>
+
+<div class="layout">
+  <div class="main">
+
+<!-- KPI CARDS -->
+    <div class="scenarios">
+      <!-- PROJETO -->
+      <div class="scenario-card" style="border-top:2px solid var(--real)">
+        <div class="card-header">
+          <span class="card-title" style="color:var(--real)">Projeto</span>
+          <span class="badge badge-real">Tipologia</span>
+        </div>
+        <div class="card-body">
+          <div class="kpi-grid">
+            <div class="kpi-item"><div class="kpi-label">R$/M²</div><div class="kpi-value" id="r_rsm2">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">R$/Hora</div><div class="kpi-value" id="r_rsh">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">M²/Hora</div><div class="kpi-value" id="r_m2h">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">Cu$/Hora</div><div class="kpi-value" id="r_cuh">–</div></div>
+            <div class="kpi-item kpi-full"><div class="kpi-label">Mg/Hora</div><div class="kpi-value" id="r_mgh" style="color:var(--real)">–</div></div>
+          </div>
+          <div class="lucro-box" style="border:1px solid rgba(139,94,60,0.25)">
+            <div><div class="lucro-label">EBITDA</div><div class="lucro-sub" id="r_luc_sub">–</div></div>
+            <div class="lucro-value" id="r_luc" style="color:var(--real)">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DECORAÇÃO -->
+      <div class="scenario-card" style="border-top:2px solid var(--orcado)">
+        <div class="card-header">
+          <span class="card-title" style="color:var(--orcado)">Decoração</span>
+          <span class="badge badge-orcado">Tipologia</span>
+        </div>
+        <div class="card-body">
+          <div class="kpi-grid">
+            <div class="kpi-item"><div class="kpi-label">R$/M²</div><div class="kpi-value" id="o_rsm2">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">R$/Hora</div><div class="kpi-value" id="o_rsh">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">M²/Hora</div><div class="kpi-value" id="o_m2h">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">Cu$/Hora</div><div class="kpi-value" id="o_cuh">–</div></div>
+            <div class="kpi-item kpi-full"><div class="kpi-label">Mg/Hora</div><div class="kpi-value" id="o_mgh" style="color:var(--orcado)">–</div></div>
+          </div>
+          <div class="lucro-box" style="border:1px solid rgba(107,124,69,0.25)">
+            <div><div class="lucro-label">EBITDA</div><div class="lucro-sub" id="o_luc_sub">–</div></div>
+            <div class="lucro-value" id="o_luc" style="color:var(--orcado)">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBRA -->
+      <div class="scenario-card" style="border-top:2px solid var(--meta)">
+        <div class="card-header">
+          <span class="card-title" style="color:var(--meta)">Obra</span>
+          <span class="badge badge-meta">Tipologia</span>
+        </div>
+        <div class="card-body">
+          <div class="kpi-grid">
+            <div class="kpi-item"><div class="kpi-label">R$/M²</div><div class="kpi-value" id="m_rsm2">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">R$/Hora</div><div class="kpi-value" id="m_rsh">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">M²/Hora</div><div class="kpi-value" id="m_m2h">–</div></div>
+            <div class="kpi-item"><div class="kpi-label">Cu$/Hora</div><div class="kpi-value" id="m_cuh">–</div></div>
+            <div class="kpi-item kpi-full"><div class="kpi-label">Mg/Hora</div><div class="kpi-value" id="m_mgh" style="color:var(--meta)">–</div></div>
+          </div>
+          <div class="lucro-box" style="border:1px solid rgba(61,96,112,0.25)">
+            <div><div class="lucro-label">EBITDA</div><div class="lucro-sub" id="m_luc_sub">–</div></div>
+            <div class="lucro-value" id="m_luc" style="color:var(--meta)">–</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALAVANCAS (Preço, Volume, Impostos, Desp. Fixas) -->
+    <div class="section-card">
+      <div class="section-card-header" onclick="toggleSection('alavancas')">
+        <span class="section-card-title">▸ Alavancas Principais — por Tipologia de Serviço</span>
+        <span class="section-card-toggle open" id="alavancas-toggle">▲</span>
+      </div>
+      <div class="section-card-body" id="alavancas-body">
+        <div class="inputs-section" style="padding-top:4px">
+
+          <!-- REAL -->
+          <div class="input-card" style="border-top:2px solid var(--real)">
+            <div class="input-card-title" style="color:var(--real)">▸ Alavancas — Projeto</div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Preço (R$/M²)</span><span class="input-row-val" id="r_preco_v">–</span></div>
+              <input type="range" class="real" id="r_preco" min="200" max="1000" step="10" value="350">
+            </div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Volume (M²)</span><span class="input-row-val" id="r_vol_v">–</span></div>
+              <input type="range" class="real" id="r_vol" min="0" max="5000" step="10" value="500">
+            </div>
+<div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Impostos (%)</span><span class="input-row-val" id="r_imp_v">–</span></div>
+              <input type="range" class="real" id="r_imp" min="0" max="40" step="0.5" value="19.5">
+            </div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Desp. Fixas (R$)</span><span class="input-row-val" id="r_df_v">–</span></div>
+              <input type="range" class="real" id="r_df" min="0" max="200000" step="1000" value="30000">
+            </div>
+          </div>
+
+          <!-- ORÇADO -->
+          <div class="input-card" style="border-top:2px solid var(--orcado)">
+            <div class="input-card-title" style="color:var(--orcado)">▸ Alavancas — Decoração</div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Preço (R$/M²)</span><span class="input-row-val" id="o_preco_v">–</span></div>
+              <input type="range" class="orcado" id="o_preco" min="200" max="1000" step="10" value="350">
+            </div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Volume (M²)</span><span class="input-row-val" id="o_vol_v">–</span></div>
+              <input type="range" class="orcado" id="o_vol" min="0" max="5000" step="10" value="500">
+            </div>
+<div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Impostos (%)</span><span class="input-row-val" id="o_imp_v">–</span></div>
+              <input type="range" class="orcado" id="o_imp" min="0" max="40" step="0.5" value="19.5">
+            </div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Desp. Fixas (R$)</span><span class="input-row-val" id="o_df_v">–</span></div>
+              <input type="range" class="orcado" id="o_df" min="0" max="200000" step="1000" value="30000">
+            </div>
+          </div>
+
+          <!-- META -->
+          <div class="input-card" style="border-top:2px solid var(--meta)">
+            <div class="input-card-title" style="color:var(--meta)">▸ Alavancas — Obra</div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Preço (R$/M²)</span><span class="input-row-val" id="m_preco_v">–</span></div>
+              <input type="range" class="meta" id="m_preco" min="200" max="1000" step="10" value="350">
+            </div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Volume (M²)</span><span class="input-row-val" id="m_vol_v">–</span></div>
+              <input type="range" class="meta" id="m_vol" min="0" max="5000" step="10" value="500">
+            </div>
+<div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Impostos (%)</span><span class="input-row-val" id="m_imp_v">–</span></div>
+              <input type="range" class="meta" id="m_imp" min="0" max="40" step="0.5" value="19.5">
+            </div>
+            <div class="input-row">
+              <div class="input-row-label"><span class="input-row-name">Desp. Fixas (R$)</span><span class="input-row-val" id="m_df_v">–</span></div>
+              <input type="range" class="meta" id="m_df" min="0" max="200000" step="1000" value="30000">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPE / CUSTO HORA -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="section-card-title">▸ Equipe — Custo/Hora por Tipologia de Serviço</span>
+      </div>
+      <div class="section-card-body" id="equipe-body">
+        <div class="equipe-grid">
+          <!-- PROJETO -->
+          <div class="equipe-col" style="border-top:2px solid var(--real)">
+            <div class="equipe-col-title" style="color:var(--real)">Equipe — Projeto</div>
+            <table class="equipe-table">
+              <thead><tr><th>Cargo</th><th>R$/h</th><th>Dias/sem</th><th>Semanas</th><th class="right">Total h</th></tr></thead>
+              <tbody id="equipe_projeto_body"></tbody>
+            </table>
+            <button class="equipe-add-btn" onclick="addEquipeLinhaS('projeto')">+ Adicionar cargo</button>
+            <div class="equipe-total">Custo hora médio ponderado: <span id="equipe_projeto_cph">–</span></div>
+            <div class="equipe-total">Total horas equipe: <span id="equipe_projeto_hrs">–</span></div>
+            <div class="equipe-total" style="font-weight:500; color:var(--real)">Custo total equipe: <span id="equipe_projeto_total">–</span></div>
+          </div>
+          <!-- DECORAÇÃO -->
+          <div class="equipe-col" style="border-top:2px solid var(--orcado)">
+            <div class="equipe-col-title" style="color:var(--orcado)">Equipe — Decoração</div>
+            <table class="equipe-table">
+              <thead><tr><th>Cargo</th><th>R$/h</th><th>Dias/sem</th><th>Semanas</th><th class="right">Total h</th></tr></thead>
+              <tbody id="equipe_decoracao_body"></tbody>
+            </table>
+            <button class="equipe-add-btn" onclick="addEquipeLinhaS('decoracao')">+ Adicionar cargo</button>
+            <div class="equipe-total">Custo hora médio ponderado: <span id="equipe_decoracao_cph">–</span></div>
+            <div class="equipe-total">Total horas equipe: <span id="equipe_decoracao_hrs">–</span></div>
+            <div class="equipe-total" style="font-weight:500; color:var(--orcado)">Custo total equipe: <span id="equipe_decoracao_total">–</span></div>
+          </div>
+          <!-- OBRA -->
+          <div class="equipe-col" style="border-top:2px solid var(--meta)">
+            <div class="equipe-col-title" style="color:var(--meta)">Equipe — Acomp. de Obra</div>
+            <table class="equipe-table">
+              <thead><tr><th>Cargo</th><th>R$/h</th><th>Dias/sem</th><th>Semanas</th><th class="right">Total h</th></tr></thead>
+              <tbody id="equipe_obra_body"></tbody>
+            </table>
+            <button class="equipe-add-btn" onclick="addEquipeLinhaS('obra')">+ Adicionar cargo</button>
+            <div class="equipe-total">Custo hora médio ponderado: <span id="equipe_obra_cph">–</span></div>
+            <div class="equipe-total">Total horas equipe: <span id="equipe_obra_hrs">–</span></div>
+            <div class="equipe-total" style="font-weight:500; color:var(--meta)">Custo total equipe: <span id="equipe_obra_total">–</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOS DIRETOS -->
+    <div class="section-card">
+      <div class="section-card-header">
+        <span class="section-card-title">▸ Custos Diretos por Tipologia de Serviço</span>
+      </div>
+      <div class="section-card-body" id="custos-body">
+        <div class="custos-grid">
+          <!-- PROJETO -->
+          <div class="custos-col" style="border-top:2px solid var(--real)">
+            <div class="custos-col-title" style="color:var(--real)">Custos Diretos — Projeto</div>
+            <table class="custos-table">
+              <thead><tr><th>Descrição</th><th>Qtd</th><th>Valor unit. (R$)</th><th class="right">Total (R$)</th></tr></thead>
+              <tbody id="custos_projeto_body"></tbody>
+            </table>
+            <button class="custos-add-btn" onclick="addCustosLinhaS('projeto')">+ Adicionar gasto</button>
+            <div class="custos-total">Total custos diretos: <span id="custos_projeto_total">–</span></div>
+          </div>
+          <!-- DECORAÇÃO -->
+          <div class="custos-col" style="border-top:2px solid var(--orcado)">
+            <div class="custos-col-title" style="color:var(--orcado)">Custos Diretos — Decoração</div>
+            <table class="custos-table">
+              <thead><tr><th>Descrição</th><th>Qtd</th><th>Valor unit. (R$)</th><th class="right">Total (R$)</th></tr></thead>
+              <tbody id="custos_decoracao_body"></tbody>
+            </table>
+            <button class="custos-add-btn" onclick="addCustosLinhaS('decoracao')">+ Adicionar gasto</button>
+            <div class="custos-total">Total custos diretos: <span id="custos_decoracao_total">–</span></div>
+          </div>
+          <!-- OBRA -->
+          <div class="custos-col" style="border-top:2px solid var(--meta)">
+            <div class="custos-col-title" style="color:var(--meta)">Custos Diretos — Acomp. de Obra</div>
+            <table class="custos-table">
+              <thead><tr><th>Descrição</th><th>Qtd</th><th>Valor unit. (R$)</th><th class="right">Total (R$)</th></tr></thead>
+              <tbody id="custos_obra_body"></tbody>
+            </table>
+            <button class="custos-add-btn" onclick="addCustosLinhaS('obra')">+ Adicionar gasto</button>
+            <div class="custos-total">Total custos diretos: <span id="custos_obra_total">–</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDICADORES -->
+    <div class="ind-section">
+      <div class="ind-title">Indicadores Comparativos</div>
+      <table class="ind-table">
+        <thead>
+          <tr>
+            <th>Indicador</th>
+            <th style="color:var(--real)">Projeto</th>
+            <th style="color:var(--orcado)">Decoração</th>
+            <th style="color:var(--meta)">Obra</th>
+            <th>Proj. vs Dec.</th>
+            <th>Proj. vs Obra</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="muted">Faturamento (R$)</td><td class="r" id="t_r_fat">–</td><td class="o" id="t_o_fat">–</td><td class="m" id="t_m_fat">–</td><td id="t_ro_fat">–</td><td id="t_rm_fat">–</td></tr>
+          <tr><td class="muted">Impostos (R$)</td><td class="r" id="t_r_imp">–</td><td class="o" id="t_o_imp">–</td><td class="m" id="t_m_imp">–</td><td id="t_ro_imp">–</td><td id="t_rm_imp">–</td></tr>
+          <tr><td class="muted">Receita Líquida (R$)</td><td class="r" id="t_r_rl">–</td><td class="o" id="t_o_rl">–</td><td class="m" id="t_m_rl">–</td><td id="t_ro_rl">–</td><td id="t_rm_rl">–</td></tr>
+          <tr><td class="muted">Custo Equipe (R$)</td><td class="r" id="t_r_ceq">–</td><td class="o" id="t_o_ceq">–</td><td class="m" id="t_m_ceq">–</td><td id="t_ro_ceq">–</td><td id="t_rm_ceq">–</td></tr>
+          <tr><td class="muted">Custos Diretos (R$)</td><td class="r" id="t_r_cd">–</td><td class="o" id="t_o_cd">–</td><td class="m" id="t_m_cd">–</td><td id="t_ro_cd">–</td><td id="t_rm_cd">–</td></tr>
+          <tr><td class="muted">Custos Variáveis Total (R$)</td><td class="r" id="t_r_cv">–</td><td class="o" id="t_o_cv">–</td><td class="m" id="t_m_cv">–</td><td id="t_ro_cv">–</td><td id="t_rm_cv">–</td></tr>
+          <tr><td class="muted">Mg. de Contribuição (R$)</td><td class="r" id="t_r_mb">–</td><td class="o" id="t_o_mb">–</td><td class="m" id="t_m_mb">–</td><td id="t_ro_mb">–</td><td id="t_rm_mb">–</td></tr>
+          <tr><td class="muted">R$/M²</td><td class="r" id="t_r_rsm2">–</td><td class="o" id="t_o_rsm2">–</td><td class="m" id="t_m_rsm2">–</td><td id="t_ro_rsm2">–</td><td id="t_rm_rsm2">–</td></tr>
+          <tr><td class="muted">M²/Hora</td><td class="r" id="t_r_m2h">–</td><td class="o" id="t_o_m2h">–</td><td class="m" id="t_m_m2h">–</td><td id="t_ro_m2h">–</td><td id="t_rm_m2h">–</td></tr>
+          <tr><td class="muted">Mg/Hora (R$)</td><td class="r" id="t_r_mgh">–</td><td class="o" id="t_o_mgh">–</td><td class="m" id="t_m_mgh">–</td><td id="t_ro_mgh">–</td><td id="t_rm_mgh">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- DRE PANEL -->
+  <div class="dre-panel">
+    <div class="dre-header">DRE — Resultado</div>
+    <div class="dre-body">
+      <!-- Cabeçalhos de colunas -->
+      <div class="dre-row section-title">
+        <div class="dre-name">Receitas</div>
+        <div class="dre-vals">
+          <div class="dre-val real" style="font-size:8px">PROJ.</div>
+          <div class="dre-val orcado" style="font-size:8px">DEC.</div>
+          <div class="dre-val meta" style="font-size:8px">OBRA</div>
+        </div>
+      </div>
+      <div class="dre-row"><div class="dre-name">Receita Bruta</div><div class="dre-vals"><div class="dre-val real" id="d_r_rb">–</div><div class="dre-val orcado" id="d_o_rb">–</div><div class="dre-val meta" id="d_m_rb">–</div></div></div>
+      <div class="dre-row"><div class="dre-name">(-) Impostos</div><div class="dre-vals"><div class="dre-val real" id="d_r_imp">–</div><div class="dre-val orcado" id="d_o_imp">–</div><div class="dre-val meta" id="d_m_imp">–</div></div></div>
+      <div class="dre-row subtotal"><div class="dre-name">Receita Líquida</div><div class="dre-vals"><div class="dre-val real" id="d_r_rl">–</div><div class="dre-val orcado" id="d_o_rl">–</div><div class="dre-val meta" id="d_m_rl">–</div></div></div>
+      <div class="dre-row section-title"><div class="dre-name">Custos</div></div>
+      <div class="dre-row"><div class="dre-name">(-) Custo Equipe</div><div class="dre-vals"><div class="dre-val real" id="d_r_ceq">–</div><div class="dre-val orcado" id="d_o_ceq">–</div><div class="dre-val meta" id="d_m_ceq">–</div></div></div>
+      <div class="dre-row"><div class="dre-name">(-) Custos Diretos</div><div class="dre-vals"><div class="dre-val real" id="d_r_cd">–</div><div class="dre-val orcado" id="d_o_cd">–</div><div class="dre-val meta" id="d_m_cd">–</div></div></div>
+      <div class="dre-row subtotal"><div class="dre-name">Mg. de Contribuição</div><div class="dre-vals"><div class="dre-val real" id="d_r_mb">–</div><div class="dre-val orcado" id="d_o_mb">–</div><div class="dre-val meta" id="d_m_mb">–</div></div></div>
+      <div class="dre-row section-title"><div class="dre-name">Despesas</div></div>
+      <div class="dre-row"><div class="dre-name">(-) Desp. Fixas</div><div class="dre-vals"><div class="dre-val real" id="d_r_df">–</div><div class="dre-val orcado" id="d_o_df">–</div><div class="dre-val meta" id="d_m_df">–</div></div></div>
+      <div class="dre-row total"><div class="dre-name">EBITDA</div><div class="dre-vals"><div class="dre-val real" id="d_r_ebitda" style="font-weight:700">–</div><div class="dre-val orcado" id="d_o_ebitda" style="font-weight:700">–</div><div class="dre-val meta" id="d_m_ebitda" style="font-weight:700">–</div></div></div>
+      <div class="dre-row section-title"><div class="dre-name">Margens</div></div>
+      <div class="dre-row"><div class="dre-name">Mg. Contrib. %</div><div class="dre-vals"><div class="dre-val real" id="d_r_mbp">–</div><div class="dre-val orcado" id="d_o_mbp">–</div><div class="dre-val meta" id="d_m_mbp">–</div></div></div>
+      <div class="dre-row"><div class="dre-name">EBITDA %</div><div class="dre-vals"><div class="dre-val real" id="d_r_ebitdap">–</div><div class="dre-val orcado" id="d_o_ebitdap">–</div><div class="dre-val meta" id="d_m_ebitdap">–</div></div></div>
+
+      <!-- CONSOLIDADO — soma das 3 tipologias, mesma estrutura do DRE -->
+      <div class="dre-row section-title" style="padding-top:16px">
+        <div class="dre-name">Consolidado (Σ Tipologias)</div>
+        <div class="dre-vals"><div class="dre-val" style="font-size:8px;min-width:80px;text-align:right;color:var(--muted)">TOTAL</div></div>
+      </div>
+      <div class="dre-row section-title"><div class="dre-name">Receitas</div></div>
+      <div class="dre-row"><div class="dre-name">Receita Bruta</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_fat">–</div></div></div>
+      <div class="dre-row"><div class="dre-name">(-) Impostos</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_imp">–</div></div></div>
+      <div class="dre-row subtotal"><div class="dre-name">Receita Líquida</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right;font-weight:500" id="dc_rl">–</div></div></div>
+      <div class="dre-row section-title"><div class="dre-name">Custos</div></div>
+      <div class="dre-row"><div class="dre-name">(-) Custo Equipe</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_ceq">–</div></div></div>
+      <div class="dre-row"><div class="dre-name">(-) Custos Diretos</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_cd">–</div></div></div>
+      <div class="dre-row subtotal"><div class="dre-name">Mg. de Contribuição</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right;font-weight:500" id="dc_mb">–</div></div></div>
+      <div class="dre-row section-title"><div class="dre-name">Despesas</div></div>
+      <div class="dre-row"><div class="dre-name">(-) Desp. Fixas</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_df">–</div></div></div>
+      <div class="dre-row total"><div class="dre-name">EBITDA</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right;font-weight:700" id="dc_ebitda">–</div></div></div>
+      <div class="dre-row section-title"><div class="dre-name">Margens</div></div>
+      <div class="dre-row"><div class="dre-name">Mg. Contrib. %</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_mbp">–</div></div></div>
+      <div class="dre-row"><div class="dre-name">EBITDA %</div><div class="dre-vals"><div class="dre-val" style="min-width:80px;text-align:right" id="dc_ebitdap">–</div></div></div>
+      <!-- hidden IDs to avoid JS errors from old code -->
+      <span style="display:none" id="dc_r_p_rb"></span><span style="display:none" id="dc_o_p_rb"></span><span style="display:none" id="dc_m_p_rb"></span>
+      <span style="display:none" id="dc_r_p_cv"></span><span style="display:none" id="dc_o_p_cv"></span><span style="display:none" id="dc_m_p_cv"></span>
+      <span style="display:none" id="dc_r_p_ll"></span><span style="display:none" id="dc_o_p_ll"></span><span style="display:none" id="dc_m_p_ll"></span>
+
+    </div>
+    <div class="dre-legend">
+      <div class="dre-leg-item"><div class="dre-leg-dot" style="background:var(--real)"></div>Projeto</div>
+      <div class="dre-leg-item"><div class="dre-leg-dot" style="background:var(--orcado)"></div>Decoração</div>
+      <div class="dre-leg-item"><div class="dre-leg-dot" style="background:var(--meta)"></div>Obra</div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const SERVICES = ['projeto', 'decoracao', 'obra'];
+let currentService = 'projeto';
+
+// Each service stores its own equipe rows and custos rows
+const state = {};
+SERVICES.forEach(svc => {
+  state[svc] = {
+    equipe: { r: [], o: [], m: [] },
+    custos: { r: [], o: [], m: [] }
+  };
+});
+
+// Add default rows for projeto
+function initDefaults() {
+  state.projeto.equipe.r = [];
+  state.projeto.equipe.o = [];
+  state.projeto.equipe.m = [];
+  state.projeto.custos.r = [];
+  state.projeto.custos.o = [];
+  state.projeto.custos.m = [];
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+const fmt  = (v,d=0) => isFinite(v) ? v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–';
+const fmtK = (v) => {
+  if (!isFinite(v)) return '–';
+  const sign = v < 0 ? '-' : '';
+  const abs = Math.abs(v);
+  if (abs >= 1000) return sign + fmt(abs/1000, 1) + 'K';
+  return sign + fmt(abs, 0);
+};
+const fmtP = (v) => isFinite(v) ? fmt(v,1)+'%' : '–';
+const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+const setH = (id, val) => { const e = document.getElementById(id); if(e) e.innerHTML = val; };
+
+function varChip(a, b) {
+  if (!b || !isFinite(a) || !isFinite(b)) return '–';
+  const p = ((a - b) / Math.abs(b)) * 100;
+  return `<span class="var-chip ${p>=0?'var-pos':'var-neg'}">${p>=0?'+':''}${fmt(p,1)}%</span>`;
+}
+
+// ============================================================
+// SECTIONS TOGGLE
+// ============================================================
+function toggleSection(id) {
+  const body = document.getElementById(id + '-body');
+  const tog  = document.getElementById(id + '-toggle');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  if (tog) { tog.textContent = open ? '▼' : '▲'; tog.classList.toggle('open', !open); }
+}
+
+// ============================================================
+// SERVICE TABS
+// ============================================================
+function setService(svc, btn) {
+  currentService = svc;
+  document.querySelectorAll('.svc-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  update();
+}
+
+// ============================================================
+// EQUIPE (por tipologia de serviço)
+// ============================================================
+function calcHorasDia() { return 8; }
+
+// equipeCalc: p=r→projeto, p=o→decoracao, p=m→obra
+const P_SVC = { r:'projeto', o:'decoracao', m:'obra' };
+function equipeCalc(p) {
+  const svc = P_SVC[p] || 'projeto';
+  const rows = state[svc].equipe.r || [];
+  let totalCusto = 0, totalHrs = 0;
+  rows.forEach(row => {
+    const hrs = (row.dias || 0) * calcHorasDia() * (row.semanas || 0);
+    totalCusto += (row.cph || 0) * hrs;
+    totalHrs   += hrs;
+  });
+  const cphMedio = totalHrs > 0 ? totalCusto / totalHrs : 0;
+  return { totalCusto, totalHrs, cphMedio };
+}
+
+function saveEquipeFromUI() {
+  SERVICES.forEach(svc => {
+    const tbody = document.getElementById('equipe_'+svc+'_body');
+    if (!tbody) return;
+    const rows = [];
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      if (inputs.length < 4) return;
+      rows.push({
+        cargo:   inputs[0].value,
+        cph:     parseFloat(inputs[1].value)||0,
+        dias:    parseFloat(inputs[2].value)||0,
+        semanas: parseFloat(inputs[3].value)||0,
+      });
+    });
+    state[svc].equipe.r = rows;
+    state[svc].equipe.o = rows; // mirror to all scenarios
+    state[svc].equipe.m = rows;
+  });
+}
+
+function saveCustosFromUI() {
+  SERVICES.forEach(svc => {
+    const tbody = document.getElementById('custos_'+svc+'_body');
+    if (!tbody) return;
+    const rows = [];
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      if (inputs.length < 3) return;
+      rows.push({
+        desc: inputs[0].value,
+        qtd:  parseFloat(inputs[1].value)||0,
+        val:  parseFloat(inputs[2].value)||0,
+      });
+    });
+    state[svc].custos.r = rows;
+    state[svc].custos.o = rows;
+    state[svc].custos.m = rows;
+  });
+}
+
+function renderAllEquipe() {
+  SERVICES.forEach(svc => renderEquipeSvc(svc));
+}
+
+function renderEquipeSvc(svc) {
+  const tbody = document.getElementById('equipe_'+svc+'_body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const rows = state[svc].equipe.r || [];
+  rows.forEach((row, idx) => {
+    const hrs = (row.dias||0) * calcHorasDia() * (row.semanas||0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text"   value="${row.cargo}"   placeholder="Cargo"   oninput="onEquipeInputS('${svc}',${idx},0,this.value)"></td>
+      <td><input type="number" value="${row.cph}"     placeholder="R$/h"    min="0" step="10"  style="width:55px" oninput="onEquipeInputS('${svc}',${idx},1,this.value)"></td>
+      <td><input type="number" value="${row.dias}"    placeholder="dias"    min="0" step="1"   style="width:45px" oninput="onEquipeInputS('${svc}',${idx},2,this.value)"></td>
+      <td><input type="number" value="${row.semanas}" placeholder="sem."    min="0" step="1"   style="width:45px" oninput="onEquipeInputS('${svc}',${idx},3,this.value)"></td>
+      <td class="right">${fmt(hrs,0)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  refreshEquipeTotalsSvc(svc);
+}
+
+// Keep legacy renderEquipe for setService compatibility
+function renderEquipe(svc) { renderAllEquipe(); }
+
+function onEquipeInputS(svc, idx, field, val) {
+  const row = state[svc].equipe.r[idx];
+  if (!row) return;
+  if (field === 0) row.cargo   = val;
+  if (field === 1) row.cph     = parseFloat(val)||0;
+  if (field === 2) row.dias    = parseFloat(val)||0;
+  if (field === 3) row.semanas = parseFloat(val)||0;
+  // mirror to o and m
+  state[svc].equipe.o[idx] = {...row};
+  state[svc].equipe.m[idx] = {...row};
+  const tbody = document.getElementById('equipe_'+svc+'_body');
+  if (tbody) {
+    const tr = tbody.querySelectorAll('tr')[idx];
+    if (tr) {
+      const hrs = row.dias * calcHorasDia() * row.semanas;
+      const tds = tr.querySelectorAll('td');
+      if (tds[4]) tds[4].textContent = fmt(hrs,0);
+    }
+  }
+  refreshEquipeTotalsSvc(svc);
+  update();
+}
+
+function refreshEquipeTotalsSvc(svc) {
+  const rows = state[svc].equipe.r || [];
+  let totalCusto=0, totalHrs=0;
+  rows.forEach(r => {
+    const hrs = (r.dias||0)*calcHorasDia()*(r.semanas||0);
+    totalCusto += (r.cph||0)*hrs;
+    totalHrs   += hrs;
+  });
+  const cphMedio = totalHrs>0 ? totalCusto/totalHrs : 0;
+  set('equipe_'+svc+'_cph',   'R$ '+fmt(cphMedio,2));
+  set('equipe_'+svc+'_hrs',   fmt(totalHrs,0)+' h');
+  set('equipe_'+svc+'_total', 'R$ '+fmt(totalCusto,0));
+}
+
+// Legacy — used by old calcS via equipeCalc
+function refreshEquipeTotals(p) {
+  refreshEquipeTotalsSvc(currentService);
+}
+
+function addEquipeLinhaS(svc) {
+  if ((state[svc].equipe.r||[]).length >= 10) {
+    alert('Máximo de 10 cargos por tipologia.'); return;
+  }
+  const row = { cargo:'', cph:0, dias:5, semanas:4 };
+  state[svc].equipe.r.push({...row});
+  state[svc].equipe.o.push({...row});
+  state[svc].equipe.m.push({...row});
+  renderEquipeSvc(svc);
+  update();
+}
+
+// Keep legacy for any stray call
+function addEquipeLinha(p) { addEquipeLinhaS(currentService); }
+
+// ============================================================
+// CUSTOS DIRETOS (por tipologia de serviço)
+// ============================================================
+function custosCalc(p) {
+  // p=r→projeto, o→decoracao, m→obra
+  const svc = P_SVC[p] || 'projeto';
+  const rows = state[svc].custos.r || [];
+  return rows.reduce((acc, r) => acc + (r.qtd||0)*(r.val||0), 0);
+}
+
+function renderAllCustos() {
+  SERVICES.forEach(svc => renderCustosSvc(svc));
+}
+
+function renderCustosSvc(svc) {
+  const tbody = document.getElementById('custos_'+svc+'_body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const rows = state[svc].custos.r || [];
+  rows.forEach((row, idx) => {
+    const total = (row.qtd||0)*(row.val||0);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text"   value="${row.desc}" placeholder="Descrição" oninput="onCustosInputS('${svc}',${idx},0,this.value)"></td>
+      <td><input type="number" value="${row.qtd}"  placeholder="Qtd"  min="0" step="1"  style="width:45px" oninput="onCustosInputS('${svc}',${idx},1,this.value)"></td>
+      <td><input type="number" value="${row.val}"  placeholder="R$"   min="0" step="50" style="width:70px" oninput="onCustosInputS('${svc}',${idx},2,this.value)"></td>
+      <td class="right">${fmt(total,0)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  refreshCustosTotalSvc(svc);
+}
+
+// Legacy for setService compatibility
+function renderCustos(svc) { renderAllCustos(); }
+
+function onCustosInputS(svc, idx, field, val) {
+  const row = state[svc].custos.r[idx];
+  if (!row) return;
+  if (field === 0) row.desc = val;
+  if (field === 1) row.qtd  = parseFloat(val)||0;
+  if (field === 2) row.val  = parseFloat(val)||0;
+  state[svc].custos.o[idx] = {...row};
+  state[svc].custos.m[idx] = {...row};
+  const tbody = document.getElementById('custos_'+svc+'_body');
+  if (tbody) {
+    const tr = tbody.querySelectorAll('tr')[idx];
+    if (tr) {
+      const total = row.qtd * row.val;
+      const tds = tr.querySelectorAll('td');
+      if (tds[3]) tds[3].textContent = fmt(total,0);
+    }
+  }
+  refreshCustosTotalSvc(svc);
+  update();
+}
+
+function refreshCustosTotalSvc(svc) {
+  const total = (state[svc].custos.r||[]).reduce((a,r)=>a+(r.qtd||0)*(r.val||0),0);
+  set('custos_'+svc+'_total', 'R$ '+fmt(total,0));
+}
+
+// Legacy
+function refreshCustosTotal(p) { refreshCustosTotalSvc(currentService); }
+
+function addCustosLinhaS(svc) {
+  if ((state[svc].custos.r||[]).length >= 20) {
+    alert('Máximo de 20 gastos por tipologia.'); return;
+  }
+  const row = { desc:'', qtd:1, val:0 };
+  state[svc].custos.r.push({...row});
+  state[svc].custos.o.push({...row});
+  state[svc].custos.m.push({...row});
+  renderCustosSvc(svc);
+  update();
+}
+
+// Legacy
+function addCustosLinha(p) { addCustosLinhaS(currentService); }
+
+// ============================================================
+// MAIN CALC
+// ============================================================
+function calcS(p) {
+  const preco = +document.getElementById(p+'_preco').value;
+  const vol   = +document.getElementById(p+'_vol').value;
+  const hrs   = 0;
+  const imp   = +document.getElementById(p+'_imp').value;
+  const df    = +document.getElementById(p+'_df').value;
+
+  set(p+'_preco_v', 'R$ '+fmt(preco,0));
+  set(p+'_vol_v',   fmt(vol,0)+' m²');
+  set(p+'_imp_v',   fmtP(imp));
+  set(p+'_df_v',    'R$ '+fmt(df,0));
+
+  const fat      = preco * vol;
+  const impostos = fat * (imp/100);
+  const rl       = fat - impostos;
+
+  // Custo equipe (calculado pela tabela de equipe)
+  const eq     = equipeCalc(p);
+  const ceq    = eq.totalCusto;
+  const cphMed = eq.cphMedio;
+  const eqHrs  = eq.totalHrs;
+
+  // Custo direto
+  const cd = custosCalc(p);
+
+  // Total custo variável
+  const cv   = ceq + cd;
+  const mb   = rl - cv;
+  const ebitda = mb - df;
+  const mbPct    = fat ? (mb/fat)*100 : 0;
+  const ebitdaPct= fat ? (ebitda/fat)*100 : 0;
+  const rsm2     = preco;
+  // Usar horas totais da equipe como denominador se > 0, senão slider
+  const totalHrs = eqHrs > 0 ? eqHrs : (hrs > 0 ? hrs : 1);
+  const rsh      = fat / totalHrs;
+  const m2h      = vol / totalHrs;
+  const mgh      = rsh - cphMed;
+
+  return { fat, impostos, rl, ceq, cd, cv, mb, ebitda, mbPct, ebitdaPct,
+           rsm2, rsh, m2h, mgh, df, cph: cphMed, hrs: totalHrs, luc: ebitda };
+}
+
+// ============================================================
+// UPDATE
+// ============================================================
+function update() {
+  const r = calcS('r'), o = calcS('o'), m = calcS('m');
+
+  ['r','o','m'].forEach((p,i) => {
+    const s = [r,o,m][i];
+    set(p+'_rsm2',    fmt(s.rsm2,0));
+    set(p+'_rsh',     fmt(s.rsh,0));
+    set(p+'_m2h',     fmt(s.m2h,2));
+    set(p+'_cuh',     fmt(s.cph,0));
+    set(p+'_mgh',     fmt(s.mgh,0));
+    set(p+'_luc',     fmtK(s.luc));
+    set(p+'_luc_sub', 'Mg. Contrib.: '+fmtP(s.mbPct));
+  });
+
+  // Indicadores comparativos
+  const rows = [
+    ['fat',  r.fat,   o.fat,   m.fat,  false],
+    ['imp',  -r.impostos, -o.impostos, -m.impostos, false],
+    ['rl',   r.rl,    o.rl,    m.rl,   false],
+    ['ceq',  r.ceq,   o.ceq,   m.ceq,  false],
+    ['cd',   r.cd,    o.cd,    m.cd,   false],
+    ['cv',   r.cv,    o.cv,    m.cv,   false],
+    ['mb',   r.mb,    o.mb,    m.mb,   false],
+    ['rsm2', r.rsm2,  o.rsm2,  m.rsm2, true],
+    ['m2h',  r.m2h,   o.m2h,   m.m2h,  true],
+    ['mgh',  r.mgh,   o.mgh,   m.mgh,  true],
+    // luc row removed
+  ];
+  rows.forEach(([key,rv,ov,mv,isRaw]) => {
+    const fmt2 = isRaw ? (v => fmt(v, key==='m2h'?2:1)) : fmtK;
+    set('t_r_'+key, fmt2(rv));
+    set('t_o_'+key, fmt2(ov));
+    set('t_m_'+key, fmt2(mv));
+    setH('t_ro_'+key, varChip(rv,ov));
+    setH('t_rm_'+key, varChip(rv,mv));
+  });
+
+  // DRE lateral
+  const dreRows = [
+    ['rb',      r.fat,      o.fat,      m.fat],
+    ['imp',    -r.impostos,-o.impostos,-m.impostos],
+    ['rl',      r.rl,       o.rl,       m.rl],
+    ['ceq',    -r.ceq,     -o.ceq,     -m.ceq],
+    ['cd',     -r.cd,      -o.cd,      -m.cd],
+    ['mb',      r.mb,       o.mb,       m.mb],
+    ['df',     -r.df,      -o.df,      -m.df],
+    ['ebitda',  r.ebitda,   o.ebitda,   m.ebitda],
+    ['mbp',     r.mbPct,    o.mbPct,    m.mbPct],
+    ['ebitdap', r.ebitdaPct,o.ebitdaPct,m.ebitdaPct],
+    ['ll',      r.luc,      o.luc,      m.luc],
+  ];
+  dreRows.forEach(([key,rv,ov,mv]) => {
+    const isPct = (key==='mbp'||key==='ebitdap');
+    const fmt2  = isPct ? fmtP : fmtK;
+    set('d_r_'+key, fmt2(rv));
+    set('d_o_'+key, fmt2(ov));
+    set('d_m_'+key, fmt2(mv));
+  });
+
+  // DRE Consolidada — soma das 3 tipologias linha a linha
+  const sp = calcSvc('r'); // Projeto
+  const sd = calcSvc('o'); // Decoração
+  const so2 = calcSvc('m'); // Obra
+
+  const dc_fat    = sp.fat    + sd.fat    + so2.fat;
+  const dc_imp    = sp.impostos + sd.impostos + so2.impostos;
+  const dc_rl     = sp.rl     + sd.rl     + so2.rl;
+  const dc_ceq    = sp.ceq    + sd.ceq    + so2.ceq;
+  const dc_cd     = sp.cd     + sd.cd     + so2.cd;
+  const dc_cv     = sp.cv     + sd.cv     + so2.cv;
+  const dc_mb     = sp.mb     + sd.mb     + so2.mb;
+  const dc_df     = sp.df     + sd.df     + so2.df;
+  const dc_ebitda = sp.ebitda + sd.ebitda + so2.ebitda;
+  const dc_mbp    = dc_fat > 0 ? (dc_mb     / dc_fat) * 100 : 0;
+  const dc_ebitdap= dc_fat > 0 ? (dc_ebitda / dc_fat) * 100 : 0;
+
+  set('dc_fat',    fmtK(dc_fat));
+  set('dc_imp',    fmtK(-dc_imp));
+  set('dc_rl',     fmtK(dc_rl));
+  set('dc_ceq',    fmtK(-dc_ceq));
+  set('dc_cd',     fmtK(-dc_cd));
+  set('dc_mb',     fmtK(dc_mb));
+  set('dc_df',     fmtK(-dc_df));
+  set('dc_ebitda', fmtK(dc_ebitda));
+  set('dc_mbp',    fmtP(dc_mbp));
+  set('dc_ebitdap',fmtP(dc_ebitdap));
+  // dc_r_tot removed (Lucro Líquido row deleted)
+
+  buildPdfDre(r,o,m);
+}
+
+// calcSvc uses state[svc] but slider values are always from current displayed sliders
+// For cross-service calc we reuse slider values (they're universal alavancas per scenario/service)
+// NOTE: In a real multi-service dashboard each service would have its own sliders.
+// Here the sliders represent the currently active service, and the DRE consolidated
+// will show service-specific stored equipe+custos data with the same price/vol/hrs sliders
+function calcSvc(p) {
+  // p=r→projeto, o→decoracao, m→obra (same as P_SVC mapping)
+  const svc = P_SVC[p] || 'projeto';
+  const preco = +document.getElementById(p+'_preco').value;
+  const vol   = +document.getElementById(p+'_vol').value;
+  const imp   = +document.getElementById(p+'_imp').value;
+  const df    = +document.getElementById(p+'_df').value;
+
+  const fat      = preco * vol;
+  const impostos = fat * (imp/100);
+  const rl       = fat - impostos;
+
+  const eq  = equipeCalcSvc(p, svc);
+  const ceq = eq.totalCusto;
+  const cd  = custosDirCalcSvc(p, svc);
+  const cv  = ceq + cd;
+  const mb  = rl - cv;
+  const ebitda = mb - df;
+  return { fat, impostos, rl, ceq, cd, cv, mb, df, ebitda, luc: ebitda };
+}
+
+function equipeCalcSvc(p, svc) {
+  // Always use .r slot (unified per service)
+  const rows = (state[svc] && state[svc].equipe.r) || [];
+  let totalCusto=0, totalHrs=0;
+  rows.forEach(r => {
+    const hrs = (r.dias||0)*calcHorasDia()*(r.semanas||0);
+    totalCusto += (r.cph||0)*hrs;
+    totalHrs   += hrs;
+  });
+  const cphMedio = totalHrs>0 ? totalCusto/totalHrs : 0;
+  return { totalCusto, totalHrs, cphMedio };
+}
+
+function custosDirCalcSvc(p, svc) {
+  // Always use .r slot (unified per service)
+  const rows = (state[svc] && state[svc].custos.r) || [];
+  return rows.reduce((a,r) => a+(r.qtd||0)*(r.val||0), 0);
+}
+
+// ============================================================
+// PDF DRE TABLE
+// ============================================================
+function buildPdfDre(r,o,m) {
+  const rows = [
+    {label:'Receita Bruta',        rv:r.fat,        ov:o.fat,        mv:m.fat,        cls:''},
+    {label:'(-) Impostos',         rv:-r.impostos,  ov:-o.impostos,  mv:-m.impostos,  cls:''},
+    {label:'Receita Líquida',      rv:r.rl,         ov:o.rl,         mv:m.rl,         cls:'subtotal'},
+    {label:'(-) Custo Equipe',     rv:-r.ceq,       ov:-o.ceq,       mv:-m.ceq,       cls:''},
+    {label:'(-) Custos Diretos',   rv:-r.cd,        ov:-o.cd,        mv:-m.cd,        cls:''},
+    {label:'(-) Custos Var. Total',rv:-r.cv,        ov:-o.cv,        mv:-m.cv,        cls:''},
+    {label:'Mg. de Contribuição',  rv:r.mb,         ov:o.mb,         mv:m.mb,         cls:'subtotal'},
+    {label:'Mg. Contrib. %',       rv:r.mbPct,      ov:o.mbPct,      mv:m.mbPct,      cls:'', pct:true},
+    {label:'(-) Despesas Fixas',   rv:-r.df,        ov:-o.df,        mv:-m.df,        cls:''},
+    {label:'EBITDA',               rv:r.ebitda,     ov:o.ebitda,     mv:m.ebitda,     cls:'total'},
+    {label:'EBITDA %',             rv:r.ebitdaPct,  ov:o.ebitdaPct,  mv:m.ebitdaPct,  cls:'', pct:true},
+    // LUCRO LÍQUIDO removed
+  ];
+  const tbody = document.getElementById('pdfDreBody');
+  if (!tbody) return;
+  const vc = (a,b) => {
+    if(!b||!isFinite(a)||!isFinite(b)) return '–';
+    const p=((a-b)/Math.abs(b))*100;
+    return (p>=0?'+':'')+fmt(p,1)+'%';
+  };
+  tbody.innerHTML = rows.map(row => {
+    const f = row.pct ? fmtP : fmtK;
+    return `<tr class="${row.cls}">
+      <td class="muted">${row.label}</td>
+      <td class="r">${f(row.rv)}</td>
+      <td class="o">${f(row.ov)}</td>
+      <td class="m">${f(row.mv)}</td>
+      <td>${vc(row.rv,row.ov)}</td>
+      <td>${vc(row.rv,row.mv)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function exportPDF() {
+  const now = new Date();
+  const el = document.getElementById('coverDate');
+  if (el) el.textContent = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  window.print();
+}
+
+// ============================================================
+// WIRE SLIDERS
+// ============================================================
+['r','o','m'].forEach(p => {
+  ['preco','vol','imp','df'].forEach(f => {
+    const el = document.getElementById(p+'_'+f);
+    if (el) el.addEventListener('input', update);
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+initDefaults();
+// No defaults to mirror
+renderAllEquipe();
+renderAllCustos();
+update();
+</script>
+</body>
+</html>
